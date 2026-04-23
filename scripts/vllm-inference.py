@@ -1,6 +1,6 @@
 """
 uv run python scripts/vllm-inference.py
-uv run python scripts/vllm-inference.py --model-path data/Qwen/Qwen2.5-0.5B
+uv run python scripts/vllm-inference.py --model-path data/Qwen/Qwen2.5-Math-1.5B
 """
 
 from __future__ import annotations
@@ -11,8 +11,7 @@ from pathlib import Path
 from vllm import LLM, SamplingParams
 
 DEFAULT_MODEL_CANDIDATES = [
-    Path("data/Qwen/Qwen2.5-0.5B"),
-    Path("data/Qwen/Qwen2.5-3B-Instruct"),
+    Path("data/Qwen/Qwen2.5-Math-1.5B"),
 ]
 
 DEFAULT_PROMPTS = [
@@ -33,7 +32,7 @@ def parse_args() -> argparse.Namespace:
         action="append",
         help=(
             "Path to a local HuggingFace model directory. Repeat this flag to test "
-            "multiple models. Defaults to the expected Qwen directories under data/."
+            "multiple models. Defaults to the required Qwen2.5-Math-1.5B directory under data/."
         ),
     )
     parser.add_argument(
@@ -78,7 +77,7 @@ def default_existing_models() -> list[Path]:
 
     searched = "\n".join(f"  - {candidate}" for candidate in DEFAULT_MODEL_CANDIDATES)
     raise FileNotFoundError(
-        "No default local Qwen model directories were found. Download the models and place them in one of:\n"
+        "No default local Qwen model directory was found. Download the model and place it in:\n"
         f"{searched}"
     )
 
