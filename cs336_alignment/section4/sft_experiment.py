@@ -188,6 +188,21 @@ def build_eval_schedule(total_optimizer_steps: int, num_evals_per_run: int) -> s
     return schedule
 
 
+def build_optimizer_step_example_counts(
+    num_examples: int,
+    per_device_batch_size: int,
+    gradient_accumulation_steps: int,
+) -> list[int]:
+    microbatch_sizes = [
+        min(per_device_batch_size, num_examples - start)
+        for start in range(0, num_examples, per_device_batch_size)
+    ]
+    return [
+        sum(microbatch_sizes[start : start + gradient_accumulation_steps])
+        for start in range(0, len(microbatch_sizes), gradient_accumulation_steps)
+    ]
+
+
 def write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w") as outfile:
@@ -329,6 +344,11 @@ def train_single_run(
     microbatches_per_epoch = math.ceil(len(train_examples) / args.per_device_batch_size)
     total_optimizer_steps = math.ceil(microbatches_per_epoch / args.gradient_accumulation_steps) * args.num_epochs
     eval_schedule = build_eval_schedule(total_optimizer_steps, args.num_evals_per_run)
+    optimizer_step_example_counts = build_optimizer_step_example_counts(
+        num_examples=len(train_examples),
+        per_device_batch_size=args.per_device_batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+    )
 
     config = {
         "run_name": run_name,
@@ -418,11 +438,21 @@ def train_single_run(
             grad_norm = float(clip_grad_norm_(policy.parameters(), max_norm=1.0).item())
             optimizer.step()
             optimizer_step += 1
+            epoch_step = ((optimizer_step - 1) % len(optimizer_step_example_counts)) + 1
+            examples_in_optimizer_step = optimizer_step_example_counts[epoch_step - 1]
+            loss_per_token = train_record_loss_per_token = (
+                (sum(chunk_losses) * examples_in_optimizer_step / chunk_response_tokens)
+                if chunk_response_tokens > 0
+                else None
+            )
             train_record = {
                 "train_step": optimizer_step,
                 "epoch": epoch_idx + 1,
+                "epoch_step": epoch_step,
                 "loss": sum(chunk_losses),
+                "loss_per_token": train_record_loss_per_token,
                 "grad_norm": grad_norm,
+                "examples_in_step": examples_in_optimizer_step,
                 "response_tokens": chunk_response_tokens,
             }
             train_history.append(train_record)
@@ -430,7 +460,9 @@ def train_single_run(
                 {
                     "train_step": optimizer_step,
                     "train/loss": train_record["loss"],
+                    "train/loss_per_token": loss_per_token,
                     "train/grad_norm": grad_norm,
+                    "train/examples_in_step": examples_in_optimizer_step,
                     "train/response_tokens": chunk_response_tokens,
                 }
             )
@@ -481,6 +513,7 @@ def train_single_run(
         "total_optimizer_steps": total_optimizer_steps,
         "train_history_path": str(output_dir / "train_history.jsonl"),
         "eval_history_path": str(output_dir / "eval_history.jsonl"),
+        "wandb_run_id": wandb_run.id,
     }
     write_json(output_dir / "summary.json", summary)
     wandb_run.summary.update(summary)
