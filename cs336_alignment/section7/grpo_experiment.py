@@ -4,6 +4,7 @@ import argparse
 import json
 import math
 import random
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -13,7 +14,7 @@ import wandb
 from torch.nn.utils import clip_grad_norm_
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
-from cs336_alignment.drgrpo_grader import r1_zero_reward_fn
+from cs336_alignment.drgrpo_grader import question_only_reward_fn, r1_zero_reward_fn
 from cs336_alignment.section4.get_response_log_probs import get_response_log_probs
 from cs336_alignment.section4.log_generations import log_generations
 from cs336_alignment.section4.tokenize_prompt_and_output import tokenize_prompt_and_output
@@ -51,8 +52,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gradient-accumulation-steps", type=int, default=128)
     parser.add_argument(
         "--loss-type",
-        choices=["no_baseline", "reinforce_with_baseline", "grpo_clip"],
+        choices=["no_baseline", "reinforce_with_baseline", "grpo_clip", "grpo_no_clip"],
         default="reinforce_with_baseline",
+    )
+    parser.add_argument(
+        "--reward-function",
+        choices=["r1_zero", "question_only"],
+        default="r1_zero",
+    )
+    parser.add_argument(
+        "--length-normalization",
+        choices=["masked_mean", "masked_normalize"],
+        default="masked_mean",
+    )
+    parser.add_argument(
+        "--length-normalize-constant",
+        type=float,
+        default=None,
+        help="Constant denominator used when --length-normalization=masked_normalize. Defaults to sampling-max-tokens.",
     )
     parser.add_argument("--advantage-eps", type=float, default=1e-6)
     parser.add_argument("--cliprange", type=float, default=0.2)
@@ -125,10 +142,32 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("train_batch_size must be greater than or equal to group_size")
     if args.loss_type == "grpo_clip" and args.epochs_per_rollout_batch < 1:
         raise ValueError("grpo_clip requires at least one epoch per rollout batch")
+    if args.loss_type == "grpo_no_clip" and args.epochs_per_rollout_batch < 1:
+        raise ValueError("grpo_no_clip requires at least one epoch per rollout batch")
+    if args.length_normalization == "masked_normalize":
+        normalize_constant = args.length_normalize_constant or float(args.sampling_max_tokens)
+        if normalize_constant <= 0:
+            raise ValueError("length_normalize_constant must be positive")
 
 
 def build_prompt_examples(examples: list[dict[str, Any]], prompt_template: str) -> list[dict[str, Any]]:
     return [{**example, "prompt": prompt_template.format(question=example["problem"])} for example in examples]
+
+
+def resolve_reward_fn(reward_function_name: str) -> Any:
+    reward_fns = {
+        "r1_zero": r1_zero_reward_fn,
+        "question_only": question_only_reward_fn,
+    }
+    return reward_fns[reward_function_name]
+
+
+def resolve_length_normalize_constant(args: argparse.Namespace) -> float | None:
+    if args.length_normalization != "masked_normalize":
+        return None
+    if args.length_normalize_constant is not None:
+        return float(args.length_normalize_constant)
+    return float(args.sampling_max_tokens)
 
 
 def build_eval_schedule(n_grpo_steps: int, num_evals_per_run: int) -> set[int]:
@@ -189,13 +228,14 @@ def run_eval(
     train_device: torch.device,
     llm: Any,
     num_log_generations: int,
+    reward_fn: Any,
     runtime: dict[str, Any],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     prompts = [example["prompt"] for example in eval_examples]
     ground_truths = [example["solution"] for example in eval_examples]
     responses, metrics_list = runtime["evaluate_vllm"](
         vllm_model=llm,
-        reward_fn=r1_zero_reward_fn,
+        reward_fn=reward_fn,
         prompts=prompts,
         ground_truths=ground_truths,
         eval_sampling_params=sampling_params,
@@ -207,7 +247,7 @@ def run_eval(
         prompts=prompts[:num_log_generations],
         responses=responses[:num_log_generations],
         ground_truths=ground_truths[:num_log_generations],
-        reward_fn=r1_zero_reward_fn,
+        reward_fn=reward_fn,
         device=train_device,
     )
     for log_entry, example in zip(generation_logs, eval_examples[:num_log_generations], strict=True):
@@ -225,7 +265,7 @@ def format_float_tag(value: float) -> str:
 
 def make_run_name(args: argparse.Namespace) -> str:
     std_tag = "std" if args.use_std_normalization else "mean"
-    return (
+    run_name = (
         f"lr_{format_float_tag(args.learning_rate)}_"
         f"loss_{args.loss_type}_"
         f"{std_tag}_"
@@ -233,6 +273,14 @@ def make_run_name(args: argparse.Namespace) -> str:
         f"rb{args.rollout_batch_size}_"
         f"ep{args.epochs_per_rollout_batch}"
     )
+    if args.length_normalization == "masked_normalize":
+        normalize_constant = resolve_length_normalize_constant(args)
+        if normalize_constant is not None:
+            normalize_tag = int(normalize_constant) if float(normalize_constant).is_integer() else normalize_constant
+            run_name += f"_lnorm_const{normalize_tag}"
+    if args.reward_function != "r1_zero":
+        run_name += f"_reward_{args.reward_function}"
+    return run_name
 
 
 def sample_rollout_examples(
@@ -254,11 +302,12 @@ def generate_grouped_responses(llm: Any, prompts: list[str], sampling_params: An
 def build_rollout_records(
     sampled_examples: list[dict[str, Any]],
     grouped_responses: list[list[str]],
+    reward_fn: Any,
 ) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for example, responses in zip(sampled_examples, grouped_responses, strict=True):
         for rollout_index, response in enumerate(responses):
-            metrics = r1_zero_reward_fn(response, example["solution"])
+            metrics = reward_fn(response, example["solution"])
             records.append(
                 {
                     "problem": example["problem"],
@@ -308,6 +357,8 @@ def run_grpo_epoch_chunk(
     gradient_accumulation_steps: int,
     loss_type: str,
     cliprange: float,
+    length_normalization: str,
+    normalize_constant: float | None,
     rng: random.Random,
     train_step_offset: int,
     runtime: dict[str, Any],
@@ -372,6 +423,8 @@ def run_grpo_epoch_chunk(
                 advantages=micro_advantages,
                 old_log_probs=micro_old_log_probs,
                 cliprange=cliprange,
+                length_normalization=length_normalization,
+                normalize_constant=normalize_constant,
             )
             token_entropy = masked_mean(scored["token_entropy"], response_mask).detach()
             chunk_losses.append(float(loss.detach().item()))
@@ -451,7 +504,10 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
     validate_args(args)
     random.seed(args.seed)
     torch.manual_seed(args.seed)
+    run_start_time = time.perf_counter()
     runtime = load_runtime_helpers()
+    reward_fn = resolve_reward_fn(args.reward_function)
+    length_normalize_constant = resolve_length_normalize_constant(args)
 
     model_path = runtime["resolve_model_path"](args.model_path)
     tokenizer = runtime["load_tokenizer"](model_path)
@@ -508,6 +564,9 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
             "train_batch_size": args.train_batch_size,
             "gradient_accumulation_steps": args.gradient_accumulation_steps,
             "loss_type": args.loss_type,
+            "reward_function": args.reward_function,
+            "length_normalization": args.length_normalization,
+            "length_normalize_constant": length_normalize_constant,
             "use_std_normalization": args.use_std_normalization,
         },
     )
@@ -545,9 +604,15 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
         train_device=train_device,
         llm=llm,
         num_log_generations=args.num_log_generations,
+        reward_fn=reward_fn,
         runtime=runtime,
     )
-    initial_eval_record = {"eval_step": 0, "grpo_step": 0, **initial_eval_summary}
+    initial_eval_record = {
+        "eval_step": 0,
+        "grpo_step": 0,
+        "elapsed_seconds": time.perf_counter() - run_start_time,
+        **initial_eval_summary,
+    }
     eval_history.append(initial_eval_record)
     generation_artifacts.append({"eval_step": 0, "logs": initial_generation_logs})
     best_eval_record = dict(initial_eval_record)
@@ -576,11 +641,11 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
             eval_device,
         )
         grouped_responses = generate_grouped_responses(llm, prompts, rollout_sampling_params)
-        rollout_records = build_rollout_records(sampled_examples, grouped_responses)
+        rollout_records = build_rollout_records(sampled_examples, grouped_responses, reward_fn=reward_fn)
         rollout_responses = [record["response"] for record in rollout_records]
         repeated_ground_truths = [record["solution"] for record in rollout_records]
         advantages, raw_rewards, reward_metadata = compute_group_normalized_rewards(
-            reward_fn=r1_zero_reward_fn,
+            reward_fn=reward_fn,
             rollout_responses=rollout_responses,
             repeated_ground_truths=repeated_ground_truths,
             group_size=args.group_size,
@@ -596,7 +661,7 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
         runtime["write_jsonl"](step_dir / "rollouts.jsonl", rollout_records)
 
         cached_old_log_probs = None
-        if args.loss_type == "grpo_clip":
+        if args.loss_type in {"grpo_clip", "grpo_no_clip"}:
             old_log_prob_chunk_size = max(1, min(args.train_batch_size, 16))
             cached_old_log_probs = cache_old_log_probs_chunked(
                 policy=policy,
@@ -622,6 +687,8 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
                 gradient_accumulation_steps=args.gradient_accumulation_steps,
                 loss_type=args.loss_type,
                 cliprange=args.cliprange,
+                length_normalization=args.length_normalization,
+                normalize_constant=length_normalize_constant,
                 rng=train_rng,
                 train_step_offset=train_step,
                 runtime=runtime,
@@ -629,6 +696,7 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
             for record in epoch_history:
                 record["grpo_step"] = grpo_step
                 record["epoch_within_rollout_batch"] = epoch_index + 1
+                record["elapsed_seconds"] = time.perf_counter() - run_start_time
             step_train_history.extend(epoch_history)
             train_history.extend(epoch_history)
             for record in epoch_history:
@@ -643,6 +711,7 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
         step_summary.update(reward_metadata)
         step_summary["grpo_step"] = grpo_step
         step_summary["train_updates"] = len(step_train_history)
+        step_summary["elapsed_seconds"] = time.perf_counter() - run_start_time
         step_summaries.append(step_summary)
         runtime["write_json"](step_dir / "summary.json", step_summary)
         runtime["write_jsonl"](step_dir / "train_history.jsonl", step_train_history)
@@ -671,9 +740,15 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
                 train_device=train_device,
                 llm=llm,
                 num_log_generations=args.num_log_generations,
+                reward_fn=reward_fn,
                 runtime=runtime,
             )
-            eval_record = {"eval_step": grpo_step, "grpo_step": grpo_step, **eval_summary}
+            eval_record = {
+                "eval_step": grpo_step,
+                "grpo_step": grpo_step,
+                "elapsed_seconds": time.perf_counter() - run_start_time,
+                **eval_summary,
+            }
             eval_history.append(eval_record)
             generation_artifacts.append({"eval_step": grpo_step, "logs": generation_logs})
             if best_eval_record is None or eval_record["accuracy"] > best_eval_record["accuracy"]:
@@ -715,8 +790,12 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
         "train_batch_size": args.train_batch_size,
         "gradient_accumulation_steps": args.gradient_accumulation_steps,
         "loss_type": args.loss_type,
+        "reward_function": args.reward_function,
+        "length_normalization": args.length_normalization,
+        "length_normalize_constant": length_normalize_constant,
         "use_std_normalization": args.use_std_normalization,
         "learning_rate": args.learning_rate,
+        "wall_clock_seconds": time.perf_counter() - run_start_time,
         "final_accuracy": eval_history[-1]["accuracy"],
         "best_accuracy": max(record["accuracy"] for record in eval_history),
         "best_eval_step": None if best_eval_record is None else best_eval_record["eval_step"],

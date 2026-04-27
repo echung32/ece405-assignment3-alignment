@@ -39,18 +39,16 @@ functions in [./tests/adapters.py](./tests/adapters.py).
 ``` python
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Specify the model name
-tiny_model_name = "Qwen/Qwen2.5-0.5B"
-medium_model_name = "Qwen/Qwen2.5-3B-Instruct"
+# Specify the required model name for the main assignment work
+model_name = "Qwen/Qwen2.5-Math-1.5B"
 
 # Download the model and tokenizer
-for model_name in (tiny_model_name, medium_model_name):
-    model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
-    target_directory = "../"+model_name
-    tokenizer.save_pretrained(target_directory)
-    model.save_pretrained(target_directory)
+target_directory = "../data/Qwen/Qwen2.5-Math-1.5B"
+tokenizer.save_pretrained(target_directory)
+model.save_pretrained(target_directory)
 ```
 
 ### [Click here](https://colab.research.google.com/drive/1YqTznro-FEL2CowUZ_WNOfAa-ooqQIhZ?usp=sharing) for an example setup at Colab
@@ -67,8 +65,9 @@ Follow along the [CS336@Stanford handout](./cs336_spring2025_assignment5_alignme
     - Submit the report reflecting your attempts at implementation for partial credit
 3. How to submit: You will submit the report on the assignment to [Assignment Submission Form](https://docs.google.com/forms/d/e/1FAIpQLScJg_QkwjKux3xKeM-EOmZyvA6zlbVIrf_lxN_qoCFoxdqTrg/viewform?usp=sharing&ouid=111841773839267096112). The code does not have to be attached as long as you include links to the main GitHub branch where your code lives and links to all of the Colab notebooks if applicable.
     - You don't need to submit to leaderboard.
-4. We are going to use [Qwen2.5](https://arxiv.org/abs/2412.15115) models instead of LLaMa3.1 models. Instead of LLaMa3 8B Base we will use [Qwen2.5-0.5B](https://huggingface.co/Qwen/Qwen2.5-0.5B) and instead of LLaMa3 70B Instruct we will use [Qwen2.5-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-3B-Instruct).
-    - You will have to download them.
+4. For the required assignment work, use [Qwen2.5-Math-1.5B](https://huggingface.co/Qwen/Qwen2.5-Math-1.5B) instead of the original LLaMa base model.
+    - Download it into `data/Qwen/Qwen2.5-Math-1.5B`.
+    - The smaller `Qwen2.5-0.5B` and `Qwen2.5-3B-Instruct` models are only needed for optional or extra-credit tasks.
 5. Problem (alpaca_eval_baseline) (c) may require you to edit ```scripts/alpaca_eval_vllm_llama3_70b_fn```. The model_name needs to be the path to the local directory where the Qwen2.5-3B-Instruct model is downloaded to.
 6. Problem (sst_baseline) (c) you will need to provide the path to the Qwen2.5-3B-Instruct model
 7. In Section 4.2.2 you don't have to install FlashAttention-2 unless you run a high-end GPU (A40 and above). Remove all the lines like ```attn_implementation="flash_attention_2"``` and replace ```bfloat16``` with ```float32```

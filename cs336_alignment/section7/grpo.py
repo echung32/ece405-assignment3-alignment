@@ -4,6 +4,8 @@ from typing import Callable, Literal
 
 import torch
 
+from cs336_alignment.section4.masked_normalize import masked_normalize
+
 
 def compute_group_normalized_rewards(
     reward_fn: Callable,
@@ -72,9 +74,22 @@ def compute_grpo_clip_loss(
     return loss, metadata
 
 
+def compute_grpo_no_clip_loss(
+    advantages: torch.Tensor,
+    policy_log_probs: torch.Tensor,
+    old_log_probs: torch.Tensor,
+) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    importance_ratio = torch.exp(policy_log_probs - old_log_probs)
+    loss = -(importance_ratio * advantages)
+    metadata = {
+        "importance_ratio": importance_ratio.detach(),
+    }
+    return loss, metadata
+
+
 def compute_policy_gradient_loss(
     policy_log_probs: torch.Tensor,
-    loss_type: Literal["no_baseline", "reinforce_with_baseline", "grpo_clip"],
+    loss_type: Literal["no_baseline", "reinforce_with_baseline", "grpo_clip", "grpo_no_clip"],
     raw_rewards: torch.Tensor | None = None,
     advantages: torch.Tensor | None = None,
     old_log_probs: torch.Tensor | None = None,
@@ -94,6 +109,11 @@ def compute_policy_gradient_loss(
         if advantages is None or old_log_probs is None or cliprange is None:
             raise ValueError("advantages, old_log_probs, and cliprange are required for grpo_clip")
         return compute_grpo_clip_loss(advantages, policy_log_probs, old_log_probs, cliprange)
+
+    if loss_type == "grpo_no_clip":
+        if advantages is None or old_log_probs is None:
+            raise ValueError("advantages and old_log_probs are required for grpo_no_clip")
+        return compute_grpo_no_clip_loss(advantages, policy_log_probs, old_log_probs)
 
     raise ValueError(f"Unsupported loss_type: {loss_type}")
 
@@ -117,11 +137,13 @@ def grpo_microbatch_train_step(
     policy_log_probs: torch.Tensor,
     response_mask: torch.Tensor,
     gradient_accumulation_steps: int,
-    loss_type: Literal["no_baseline", "reinforce_with_baseline", "grpo_clip"],
+    loss_type: Literal["no_baseline", "reinforce_with_baseline", "grpo_clip", "grpo_no_clip"],
     raw_rewards: torch.Tensor | None = None,
     advantages: torch.Tensor | None = None,
     old_log_probs: torch.Tensor | None = None,
     cliprange: float | None = None,
+    length_normalization: Literal["masked_mean", "masked_normalize"] = "masked_mean",
+    normalize_constant: float | None = None,
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     per_token_loss, metadata = compute_policy_gradient_loss(
         policy_log_probs=policy_log_probs,
@@ -131,7 +153,20 @@ def grpo_microbatch_train_step(
         old_log_probs=old_log_probs,
         cliprange=cliprange,
     )
-    per_example_loss = masked_mean(per_token_loss, response_mask, dim=1)
+    if length_normalization == "masked_mean":
+        per_example_loss = masked_mean(per_token_loss, response_mask, dim=1)
+    elif length_normalization == "masked_normalize":
+        if normalize_constant is None:
+            raise ValueError("normalize_constant is required for masked_normalize")
+        per_example_loss = masked_normalize(
+            tensor=per_token_loss,
+            mask=response_mask,
+            normalize_constant=normalize_constant,
+            dim=1,
+        )
+    else:
+        raise ValueError(f"Unsupported length_normalization: {length_normalization}")
+
     loss = per_example_loss.mean() / gradient_accumulation_steps
     loss.backward()
 

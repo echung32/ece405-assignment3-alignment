@@ -3,6 +3,7 @@ import torch
 from .adapters import (
     run_compute_group_normalized_rewards as compute_group_normalized_rewards,
     run_compute_grpo_clip_loss as compute_grpo_clip_loss,
+    run_compute_grpo_no_clip_loss as compute_grpo_no_clip_loss,
     run_compute_naive_policy_gradient_loss as compute_naive_policy_gradient_loss,
     run_compute_policy_gradient_loss as compute_policy_gradient_loss,
     run_grpo_microbatch_train_step as grpo_microbatch_train_step,
@@ -154,6 +155,40 @@ def test_compute_policy_gradient_loss_grpo_clip(
     numpy_snapshot.assert_match(output)
 
 
+def test_compute_grpo_no_clip_loss_matches_unclipped_ratio(
+    advantages,
+    policy_log_probs,
+    old_log_probs,
+):
+    output, metadata = compute_grpo_no_clip_loss(
+        advantages=advantages,
+        policy_log_probs=policy_log_probs,
+        old_log_probs=old_log_probs,
+    )
+    expected = -torch.exp(policy_log_probs - old_log_probs) * advantages
+    assert torch.allclose(output, expected)
+    assert "importance_ratio" in metadata
+    assert torch.allclose(metadata["importance_ratio"], torch.exp(policy_log_probs - old_log_probs))
+
+
+def test_compute_policy_gradient_loss_grpo_no_clip(
+    policy_log_probs,
+    raw_rewards,
+    advantages,
+    old_log_probs,
+):
+    output, _ = compute_policy_gradient_loss(
+        policy_log_probs=policy_log_probs,
+        loss_type="grpo_no_clip",
+        raw_rewards=raw_rewards,
+        advantages=advantages,
+        old_log_probs=old_log_probs,
+        cliprange=0.5,
+    )
+    expected = -torch.exp(policy_log_probs - old_log_probs) * advantages
+    assert torch.allclose(output, expected)
+
+
 def test_masked_mean_dim0(numpy_snapshot, tensor, mask):
     output = masked_mean(
         tensor=tensor,
@@ -248,3 +283,35 @@ def test_grpo_microbatch_train_step_grpo_clip_10_steps(
         "policy_log_probs_grad": torch.stack(grad_list),
     }
     numpy_snapshot.assert_match(output)
+
+
+def test_grpo_microbatch_train_step_masked_normalize_uses_constant_normalizer():
+    policy_log_probs = torch.tensor(
+        [[0.1, 0.2, 0.3, 0.0], [0.4, 0.5, 0.6, 0.7]],
+        dtype=torch.float32,
+        requires_grad=True,
+    )
+    response_mask = torch.tensor(
+        [[1, 1, 0, 0], [1, 1, 1, 1]],
+        dtype=torch.int64,
+    )
+    advantages = torch.tensor([[2.0], [2.0]], dtype=torch.float32)
+
+    loss, _ = grpo_microbatch_train_step(
+        policy_log_probs=policy_log_probs,
+        response_mask=response_mask,
+        gradient_accumulation_steps=1,
+        loss_type="reinforce_with_baseline",
+        advantages=advantages,
+        length_normalization="masked_normalize",
+        normalize_constant=4.0,
+    )
+
+    expected_loss = torch.tensor(-0.625, dtype=torch.float32)
+    expected_grad = torch.tensor(
+        [[-0.25, -0.25, -0.0, -0.0], [-0.25, -0.25, -0.25, -0.25]],
+        dtype=torch.float32,
+    )
+
+    assert torch.isclose(loss.detach(), expected_loss)
+    assert torch.allclose(policy_log_probs.grad, expected_grad)

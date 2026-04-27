@@ -199,6 +199,21 @@ def run_compute_grpo_clip_loss(
     )
 
 
+def run_compute_grpo_no_clip_loss(
+    advantages: torch.Tensor,
+    policy_log_probs: torch.Tensor,
+    old_log_probs: torch.Tensor,
+) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    """Compute the unclipped off-policy GRPO loss."""
+    from cs336_alignment.section7.grpo import compute_grpo_no_clip_loss
+
+    return compute_grpo_no_clip_loss(
+        advantages=advantages,
+        policy_log_probs=policy_log_probs,
+        old_log_probs=old_log_probs,
+    )
+
+
 def run_compute_policy_gradient_loss(
     policy_log_probs: torch.Tensor,
     loss_type: str,
@@ -269,6 +284,8 @@ def run_grpo_microbatch_train_step(
     advantages: torch.Tensor | None = None,
     old_log_probs: torch.Tensor | None = None,
     cliprange: float | None = None,
+    length_normalization: Literal["masked_mean", "masked_normalize"] = "masked_mean",
+    normalize_constant: float | None = None,
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     """Compute the policy gradient loss and backprop its gradients for a microbatch.
 
@@ -307,6 +324,8 @@ def run_grpo_microbatch_train_step(
         advantages=advantages,
         old_log_probs=old_log_probs,
         cliprange=cliprange,
+        length_normalization=length_normalization,
+        normalize_constant=normalize_constant,
     )
 
 
