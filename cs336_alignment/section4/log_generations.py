@@ -48,6 +48,7 @@ def log_generations(
                 model=model,
                 input_ids=input_ids,
                 labels=labels,
+                response_mask=response_mask,
                 return_token_entropy=True,
             )
             token_entropy = scored["token_entropy"]

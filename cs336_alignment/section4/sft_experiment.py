@@ -424,6 +424,7 @@ def train_single_run(
                     model=policy,
                     input_ids=input_ids,
                     labels=labels,
+                    response_mask=response_mask,
                     return_token_entropy=False,
                 )
                 loss, _ = sft_microbatch_train_step(
