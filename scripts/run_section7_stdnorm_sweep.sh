@@ -13,8 +13,8 @@ OUTPUT_ROOT="data/section7/grpo_experiment/${CAMPAIGN_NAME}"
 ORCHESTRATOR_LOG="${LOG_DIR}/orchestrator.log"
 
 RUN_CONFIGS=(
-    "label=std_normalization lr=1e-5 loss=reinforce_with_baseline std=1 epochs=1 train_batch=256 grad_accum=128 steps=50"
-    "label=mean_center_only lr=1e-5 loss=reinforce_with_baseline std=0 epochs=1 train_batch=256 grad_accum=128 steps=50"
+    "label=std_normalization lr=1e-5 loss=reinforce_with_baseline std=1 epochs=1 train_batch=256 grad_accum=64 steps=50"
+    "label=mean_center_only lr=1e-5 loss=reinforce_with_baseline std=0 epochs=1 train_batch=256 grad_accum=64 steps=50"
 )
 
 EXTRA_ARGS=()

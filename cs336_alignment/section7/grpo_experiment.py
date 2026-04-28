@@ -100,6 +100,40 @@ def serialize_json_value(value: Any) -> Any:
     return value
 
 
+def synchronize_device(device: torch.device) -> None:
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+
+
+def reset_peak_memory_stats(device: torch.device) -> None:
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+
+
+def snapshot_cuda_memory(device: torch.device) -> dict[str, float | str]:
+    snapshot: dict[str, float | str] = {"device": str(device)}
+    if device.type != "cuda":
+        return snapshot
+    snapshot.update(
+        {
+            "allocated_mb": round(torch.cuda.memory_allocated(device) / (1024**2), 2),
+            "reserved_mb": round(torch.cuda.memory_reserved(device) / (1024**2), 2),
+            "peak_allocated_mb": round(torch.cuda.max_memory_allocated(device) / (1024**2), 2),
+            "peak_reserved_mb": round(torch.cuda.max_memory_reserved(device) / (1024**2), 2),
+        }
+    )
+    return snapshot
+
+
+def emit_step_trace(grpo_step: int, phase_timings: dict[str, float], snapshots: dict[str, dict[str, Any]]) -> None:
+    trace_payload = {
+        "grpo_step": grpo_step,
+        "phase_seconds": {key: round(value, 3) for key, value in phase_timings.items()},
+        "cuda_memory_mb": snapshots,
+    }
+    print(f"[step-trace] {json.dumps(trace_payload, sort_keys=True)}", flush=True)
+
+
 def load_runtime_helpers() -> dict[str, Any]:
     from cs336_alignment.math_baseline import evaluate_vllm, summarize_metrics
     from cs336_alignment.section4.sft_experiment import (
@@ -629,8 +663,14 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
 
     prompts_per_batch = args.rollout_batch_size // args.group_size
     for grpo_step in range(1, args.n_grpo_steps + 1):
+        step_started_at = time.perf_counter()
+        phase_timings: dict[str, float] = {}
+        train_memory_snapshots: dict[str, dict[str, Any]] = {}
+        reset_peak_memory_stats(train_device)
+
         sampled_examples = sample_rollout_examples(train_examples, prompts_per_batch, train_rng)
         prompts = [example["prompt"] for example in sampled_examples]
+        phase_started_at = time.perf_counter()
         synced_policy_version = sync_policy_to_vllm_if_needed(
             policy,
             llm,
@@ -640,7 +680,16 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
             train_device,
             eval_device,
         )
+        synchronize_device(train_device)
+        phase_timings["sync_policy"] = time.perf_counter() - phase_started_at
+        train_memory_snapshots["after_sync_policy"] = snapshot_cuda_memory(train_device)
+
+        phase_started_at = time.perf_counter()
         grouped_responses = generate_grouped_responses(llm, prompts, rollout_sampling_params)
+        phase_timings["rollout_generate"] = time.perf_counter() - phase_started_at
+        train_memory_snapshots["after_rollout_generate"] = snapshot_cuda_memory(train_device)
+
+        phase_started_at = time.perf_counter()
         rollout_records = build_rollout_records(sampled_examples, grouped_responses, reward_fn=reward_fn)
         rollout_responses = [record["response"] for record in rollout_records]
         repeated_ground_truths = [record["solution"] for record in rollout_records]
@@ -655,12 +704,17 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
         for record, advantage, raw_reward in zip(rollout_records, advantages.tolist(), raw_rewards.tolist(), strict=True):
             record["advantage"] = advantage
             record["raw_reward"] = raw_reward
+        phase_timings["reward_compute"] = time.perf_counter() - phase_started_at
+        train_memory_snapshots["after_reward_compute"] = snapshot_cuda_memory(train_device)
 
+        phase_started_at = time.perf_counter()
         step_dir = output_dir / f"step_{grpo_step:04d}"
         step_dir.mkdir(parents=True, exist_ok=True)
         runtime["write_jsonl"](step_dir / "rollouts.jsonl", rollout_records)
+        phase_timings["artifact_write"] = time.perf_counter() - phase_started_at
 
         cached_old_log_probs = None
+        phase_started_at = time.perf_counter()
         if args.loss_type in {"grpo_clip", "grpo_no_clip"}:
             old_log_prob_chunk_size = max(1, min(args.train_batch_size, 16))
             cached_old_log_probs = cache_old_log_probs_chunked(
@@ -671,8 +725,12 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
                 chunk_size=old_log_prob_chunk_size,
             )
             runtime["release_memory"](train_device)
+        synchronize_device(train_device)
+        phase_timings["cache_old_log_probs"] = time.perf_counter() - phase_started_at
+        train_memory_snapshots["after_cache_old_log_probs"] = snapshot_cuda_memory(train_device)
 
         step_train_history: list[dict[str, Any]] = []
+        phase_started_at = time.perf_counter()
         for epoch_index in range(args.epochs_per_rollout_batch):
             epoch_history, train_step = run_grpo_epoch_chunk(
                 policy=policy,
@@ -707,11 +765,17 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
                 }
                 wandb.log({"train_step": record["train_step"], "grpo_step": grpo_step, **numeric_train_values})
 
+        synchronize_device(train_device)
+        phase_timings["train_update"] = time.perf_counter() - phase_started_at
+        train_memory_snapshots["after_train_update"] = snapshot_cuda_memory(train_device)
+
         step_summary = summarize_rollout_records(rollout_records, advantages)
         step_summary.update(reward_metadata)
         step_summary["grpo_step"] = grpo_step
         step_summary["train_updates"] = len(step_train_history)
         step_summary["elapsed_seconds"] = time.perf_counter() - run_start_time
+        step_summary["phase_seconds"] = {}
+        step_summary["train_cuda_memory_mb"] = {}
         step_summaries.append(step_summary)
         runtime["write_json"](step_dir / "summary.json", step_summary)
         runtime["write_jsonl"](step_dir / "train_history.jsonl", step_train_history)
@@ -722,7 +786,10 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
 
+        eval_sync_seconds = 0.0
+        eval_seconds = 0.0
         if grpo_step in eval_schedule:
+            phase_started_at = time.perf_counter()
             synced_policy_version = sync_policy_to_vllm_if_needed(
                 policy,
                 llm,
@@ -732,6 +799,11 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
                 train_device,
                 eval_device,
             )
+            synchronize_device(train_device)
+            eval_sync_seconds = time.perf_counter() - phase_started_at
+            train_memory_snapshots["after_eval_sync_policy"] = snapshot_cuda_memory(train_device)
+
+            phase_started_at = time.perf_counter()
             eval_summary, generation_logs = run_eval(
                 policy=policy,
                 tokenizer=tokenizer,
@@ -743,6 +815,9 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
                 reward_fn=reward_fn,
                 runtime=runtime,
             )
+            synchronize_device(train_device)
+            eval_seconds = time.perf_counter() - phase_started_at
+            train_memory_snapshots["after_eval"] = snapshot_cuda_memory(train_device)
             eval_record = {
                 "eval_step": grpo_step,
                 "grpo_step": grpo_step,
@@ -763,6 +838,14 @@ def train_grpo(args: argparse.Namespace) -> dict[str, Any]:
                     **{f"eval/{key}": value for key, value in eval_summary.items() if isinstance(value, (int, float))},
                 }
             )
+
+        phase_timings["eval_sync_policy"] = eval_sync_seconds
+        phase_timings["eval"] = eval_seconds
+        phase_timings["step_total"] = time.perf_counter() - step_started_at
+        step_summary["phase_seconds"] = {key: round(value, 6) for key, value in phase_timings.items()}
+        step_summary["train_cuda_memory_mb"] = train_memory_snapshots
+        runtime["write_json"](step_dir / "summary.json", step_summary)
+        emit_step_trace(grpo_step, phase_timings, train_memory_snapshots)
 
     final_model_dir = output_dir / "final_model"
     if args.save_final_model:
