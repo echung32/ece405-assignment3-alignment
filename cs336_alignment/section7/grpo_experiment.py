@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import random
@@ -297,6 +298,35 @@ def format_float_tag(value: float) -> str:
     return f"{value:.0e}".replace("-", "m").replace("+", "")
 
 
+def make_run_config_hash(args: argparse.Namespace) -> str:
+    hash_payload = {
+        "advantage_eps": args.advantage_eps,
+        "cliprange": args.cliprange,
+        "epochs_per_rollout_batch": args.epochs_per_rollout_batch,
+        "gradient_accumulation_steps": args.gradient_accumulation_steps,
+        "group_size": args.group_size,
+        "learning_rate": args.learning_rate,
+        "length_normalization": args.length_normalization,
+        "length_normalize_constant": resolve_length_normalize_constant(args),
+        "loss_type": args.loss_type,
+        "model_path": args.model_path,
+        "n_grpo_steps": args.n_grpo_steps,
+        "prompt_path": str(args.prompt_path),
+        "reward_function": args.reward_function,
+        "rollout_batch_size": args.rollout_batch_size,
+        "sampling_max_tokens": args.sampling_max_tokens,
+        "sampling_min_tokens": args.sampling_min_tokens,
+        "sampling_temperature": args.sampling_temperature,
+        "sampling_top_p": args.sampling_top_p,
+        "seed": args.seed,
+        "train_batch_size": args.train_batch_size,
+        "use_std_normalization": args.use_std_normalization,
+        "weight_decay": args.weight_decay,
+    }
+    serialized_payload = json.dumps(hash_payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha1(serialized_payload.encode("ascii")).hexdigest()[:8]
+
+
 def make_run_name(args: argparse.Namespace) -> str:
     std_tag = "std" if args.use_std_normalization else "mean"
     run_name = (
@@ -314,7 +344,7 @@ def make_run_name(args: argparse.Namespace) -> str:
             run_name += f"_lnorm_const{normalize_tag}"
     if args.reward_function != "r1_zero":
         run_name += f"_reward_{args.reward_function}"
-    return run_name
+    return f"{run_name}_cfg{make_run_config_hash(args)}"
 
 
 def sample_rollout_examples(
