@@ -18,8 +18,8 @@ OUTPUT_ROOT="data/section7/grpo_experiment/${CAMPAIGN_NAME}"
 ORCHESTRATOR_LOG="${LOG_DIR}/orchestrator.log"
 
 RUN_CONFIGS=(
-    "label=grpo_clip_best lr=1e-5 loss=grpo_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=${BEST_EPOCHS} train_batch=${BEST_TRAIN_BATCH} grad_accum=${BEST_GRAD_ACCUM} steps=${BEST_STEPS}"
-    "label=grpo_no_clip_best lr=1e-5 loss=grpo_no_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=${BEST_EPOCHS} train_batch=${BEST_TRAIN_BATCH} grad_accum=${BEST_GRAD_ACCUM} steps=${BEST_STEPS}"
+    "label=grpo_clip_best lr=1e-5 loss=grpo_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_normalize std=0 epochs=${BEST_EPOCHS} train_batch=${BEST_TRAIN_BATCH} grad_accum=${BEST_GRAD_ACCUM} steps=${BEST_STEPS}"
+    "label=grpo_no_clip_best lr=1e-5 loss=grpo_no_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_normalize std=0 epochs=${BEST_EPOCHS} train_batch=${BEST_TRAIN_BATCH} grad_accum=${BEST_GRAD_ACCUM} steps=${BEST_STEPS}"
 )
 
 EXTRA_ARGS=()

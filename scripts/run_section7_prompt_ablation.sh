@@ -19,8 +19,8 @@ OUTPUT_ROOT="data/section7/grpo_experiment/${CAMPAIGN_NAME}"
 ORCHESTRATOR_LOG="${LOG_DIR}/orchestrator.log"
 
 RUN_CONFIGS=(
-    "label=r1_zero_prompt lr=1e-5 loss=${BASE_LOSS_TYPE} reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=${BASE_EPOCHS} train_batch=${BASE_TRAIN_BATCH} grad_accum=${BASE_GRAD_ACCUM} steps=${BASE_STEPS}"
-    "label=question_only_prompt lr=1e-5 loss=${BASE_LOSS_TYPE} reward=question_only prompt=cs336_alignment/prompts/question_only.prompt length_norm=masked_mean std=1 epochs=${BASE_EPOCHS} train_batch=${BASE_TRAIN_BATCH} grad_accum=${BASE_GRAD_ACCUM} steps=${BASE_STEPS}"
+    "label=r1_zero_prompt lr=1e-5 loss=${BASE_LOSS_TYPE} reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_normalize std=0 epochs=${BASE_EPOCHS} train_batch=${BASE_TRAIN_BATCH} grad_accum=${BASE_GRAD_ACCUM} steps=${BASE_STEPS}"
+    "label=question_only_prompt lr=1e-5 loss=${BASE_LOSS_TYPE} reward=question_only prompt=cs336_alignment/prompts/question_only.prompt length_norm=masked_normalize std=0 epochs=${BASE_EPOCHS} train_batch=${BASE_TRAIN_BATCH} grad_accum=${BASE_GRAD_ACCUM} steps=${BASE_STEPS}"
 )
 
 EXTRA_ARGS=()

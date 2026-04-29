@@ -13,10 +13,10 @@ OUTPUT_ROOT="data/section7/grpo_experiment/${CAMPAIGN_NAME}"
 ORCHESTRATOR_LOG="${LOG_DIR}/orchestrator.log"
 
 RUN_CONFIGS=(
-    "label=on_policy_control lr=1e-5 loss=reinforce_with_baseline reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=1 train_batch=256 grad_accum=64 steps=200"
-    "label=clip_ep2_tb256 lr=1e-5 loss=grpo_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=2 train_batch=256 grad_accum=64 steps=200"
-    "label=clip_ep4_tb128 lr=1e-5 loss=grpo_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=4 train_batch=128 grad_accum=32 steps=200"
-    "label=clip_ep8_tb64 lr=1e-5 loss=grpo_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=8 train_batch=64 grad_accum=16 steps=200"
+    "label=clip_control_200 lr=1e-5 loss=no_baseline reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=1 train_batch=256 grad_accum=64 steps=200"
+    "label=clip_ep2_tb256_200 lr=1e-5 loss=grpo_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=2 train_batch=256 grad_accum=64 steps=200"
+    "label=clip_ep4_tb128_200 lr=1e-5 loss=grpo_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=4 train_batch=128 grad_accum=32 steps=200"
+    "label=clip_ep8_tb64_200 lr=1e-5 loss=grpo_clip reward=r1_zero prompt=cs336_alignment/prompts/r1_zero.prompt length_norm=masked_mean std=1 epochs=8 train_batch=64 grad_accum=16 steps=200"
 )
 
 EXTRA_ARGS=()
