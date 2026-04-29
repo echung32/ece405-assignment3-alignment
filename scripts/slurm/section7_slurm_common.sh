@@ -70,6 +70,14 @@ section7_require_array_index() {
     fi
 }
 
+section7_reject_extra_args() {
+    if (( $# == 0 )); then
+        return 0
+    fi
+    echo "Submission-time extra args are not supported for Section 7 Slurm sweeps. Edit RUN_CONFIGS in the Slurm file instead." >&2
+    exit 1
+}
+
 section7_init_campaign() {
     local campaign_prefix="$1"
     local default_campaign="${campaign_prefix}_${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-$(date +%Y%m%d_%H%M%S)}}"
@@ -119,13 +127,6 @@ section7_log_launch() {
     echo "[launch] campaign=${CAMPAIGN_NAME} log_dir=${LOG_DIR#$ROOT_DIR/} output_root=${OUTPUT_ROOT#$ROOT_DIR/} ${metadata}" | tee -a "$ORCHESTRATOR_LOG"
 }
 
-section7_build_extra_args() {
-    EXTRA_ARGS=("$@")
-    if (( ${#EXTRA_ARGS[@]} > 0 )) && [[ "${EXTRA_ARGS[0]}" == "--" ]]; then
-        EXTRA_ARGS=("${EXTRA_ARGS[@]:1}")
-    fi
-}
-
 section7_run_selected_config() {
     local run_log="${LOG_DIR}/${run_label}.log"
     local std_flag="--use-std-normalization"
@@ -166,9 +167,6 @@ section7_run_selected_config() {
     fi
     if [[ -n "${length_normalize_constant:-}" ]]; then
         cmd+=(--length-normalize-constant "$length_normalize_constant")
-    fi
-    if (( ${#EXTRA_ARGS[@]} > 0 )); then
-        cmd+=("${EXTRA_ARGS[@]}")
     fi
 
     (

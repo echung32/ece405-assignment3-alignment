@@ -2,6 +2,7 @@
 models/
 data/
 logs/
+slurm-logs/
 
 wandb/
 

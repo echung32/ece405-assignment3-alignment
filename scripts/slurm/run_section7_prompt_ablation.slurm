@@ -18,6 +18,7 @@ set -euo pipefail
 
 SUBMIT_DIR="${SLURM_SUBMIT_DIR:-$(pwd)}"
 source "${SUBMIT_DIR}/scripts/slurm/section7_slurm_common.sh"
+section7_reject_extra_args "$@"
 
 echo "job is starting on $(hostname)"
 
@@ -36,6 +37,5 @@ section7_init_campaign "section7_grpo_prompt_ablation"
 section7_log_launch "array_job=${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-na}} task=${SLURM_ARRAY_TASK_ID:-na} base_loss=${BASE_LOSS_TYPE} base_epochs=${BASE_EPOCHS} base_train_batch=${BASE_TRAIN_BATCH} base_grad_accum=${BASE_GRAD_ACCUM}"
 section7_select_config "${#RUN_CONFIGS[@]}"
 section7_parse_config
-section7_build_extra_args "$@"
 section7_run_selected_config
 section7_maybe_finalize_campaign "${#RUN_CONFIGS[@]}"
