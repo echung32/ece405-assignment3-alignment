@@ -19,7 +19,9 @@ from cs336_alignment.drgrpo_grader import question_only_reward_fn, r1_zero_rewar
 from cs336_alignment.section4.get_response_log_probs import get_response_log_probs
 from cs336_alignment.section4.log_generations import log_generations
 from cs336_alignment.section4.tokenize_prompt_and_output import tokenize_prompt_and_output
-from cs336_alignment.section7.grpo import compute_group_normalized_rewards, grpo_microbatch_train_step, masked_mean
+from cs336_alignment.section7.compute_group_normalized_rewards import compute_group_normalized_rewards
+from cs336_alignment.section7.grpo_microbatch_train_step import grpo_microbatch_train_step
+from cs336_alignment.section7.masked_mean import masked_mean
 
 DEFAULT_MODEL_CANDIDATES = [Path("data/Qwen/Qwen2.5-Math-1.5B")]
 DEFAULT_TRAIN_PATH = Path("data/math/train.jsonl")
