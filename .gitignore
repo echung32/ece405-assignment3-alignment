@@ -1,8 +1,12 @@
 *.bin
 models/
-data/
-logs/
 slurm-logs/
+data/Qwen
+data/mmlu
+data/gsm8k
+data/alpaca_eval
+*.safetensors
+*.npz
 
 wandb/
 
