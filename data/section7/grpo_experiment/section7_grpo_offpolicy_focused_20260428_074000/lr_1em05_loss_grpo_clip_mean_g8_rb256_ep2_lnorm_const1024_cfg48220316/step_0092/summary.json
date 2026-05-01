@@ -1,0 +1,63 @@
+{
+  "elapsed_seconds": 3088.174938616052,
+  "grpo_step": 92,
+  "mean_advantage": 0.0,
+  "mean_answer_reward": 0.14453125,
+  "mean_format_reward": 0.6484375,
+  "mean_group_std": 0.24131670594215393,
+  "mean_raw_reward": 0.14453125,
+  "mean_response_length": 594.76953125,
+  "mean_reward": 0.14453125,
+  "num_correct_rollouts": 37,
+  "num_rollouts": 256,
+  "phase_seconds": {
+    "artifact_write": 0.007363,
+    "cache_old_log_probs": 3.522589,
+    "eval": 0.0,
+    "eval_sync_policy": 0.0,
+    "reward_compute": 0.654467,
+    "rollout_generate": 3.070991,
+    "step_total": 30.415698,
+    "sync_policy": 2.091845,
+    "train_update": 21.050827
+  },
+  "std_raw_reward": 0.35231637954711914,
+  "train_cuda_memory_mb": {
+    "after_cache_old_log_probs": {
+      "allocated_mb": 11850.33,
+      "device": "cuda:0",
+      "peak_allocated_mb": 35590.67,
+      "peak_reserved_mb": 51118.0,
+      "reserved_mb": 14838.0
+    },
+    "after_reward_compute": {
+      "allocated_mb": 11850.33,
+      "device": "cuda:0",
+      "peak_allocated_mb": 11850.33,
+      "peak_reserved_mb": 14838.0,
+      "reserved_mb": 14838.0
+    },
+    "after_rollout_generate": {
+      "allocated_mb": 11850.33,
+      "device": "cuda:0",
+      "peak_allocated_mb": 11850.33,
+      "peak_reserved_mb": 14838.0,
+      "reserved_mb": 14838.0
+    },
+    "after_sync_policy": {
+      "allocated_mb": 11850.33,
+      "device": "cuda:0",
+      "peak_allocated_mb": 11850.33,
+      "peak_reserved_mb": 14838.0,
+      "reserved_mb": 14838.0
+    },
+    "after_train_update": {
+      "allocated_mb": 11845.23,
+      "device": "cuda:0",
+      "peak_allocated_mb": 38343.94,
+      "peak_reserved_mb": 57612.0,
+      "reserved_mb": 13618.0
+    }
+  },
+  "train_updates": 4
+}

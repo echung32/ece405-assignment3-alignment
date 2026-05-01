@@ -1,0 +1,30 @@
+{
+  "runs": [
+    {
+      "best_accuracy": 0.51171875,
+      "best_eval_step": 5,
+      "best_mean_token_entropy": 0.22500546951778233,
+      "best_model_path": null,
+      "eval_history_path": "data/section5/expert_iteration/section5_ei_full_20260426_fix_sweep/g8_db1024_ep2_steps5/eval_history.jsonl",
+      "final_accuracy": 0.51171875,
+      "final_mean_token_entropy": 0.22500546951778233,
+      "final_model_path": null,
+      "gradient_accumulation_steps": 8,
+      "learning_rate": 2e-05,
+      "model_path": "data/Qwen/Qwen2.5-Math-1.5B",
+      "num_ei_steps": 5,
+      "num_eval_examples": 1024,
+      "num_train_examples": 10000,
+      "per_device_batch_size": 2,
+      "questions_per_step": 1024,
+      "rollouts_per_question": 8,
+      "run_name": "g8_db1024_ep2_steps5",
+      "sft_epochs_per_step": 2,
+      "step_summaries_path": "data/section5/expert_iteration/section5_ei_full_20260426_fix_sweep/g8_db1024_ep2_steps5/step_summaries.jsonl",
+      "train_history_path": "data/section5/expert_iteration/section5_ei_full_20260426_fix_sweep/g8_db1024_ep2_steps5/train_history.jsonl"
+    }
+  ],
+  "wandb_entity": "echung32-ece405",
+  "wandb_group": "section5_ei_full_20260426_fix_sweep",
+  "wandb_project": "ece405-alignment-expert-iteration"
+}

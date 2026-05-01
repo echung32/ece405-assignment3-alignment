@@ -1,0 +1,30 @@
+{
+  "runs": [
+    {
+      "best_accuracy": 0.3115234375,
+      "best_eval_step": 50,
+      "best_model_path": "data/section7/grpo_experiment/section7_grpo_clip_single_20260426_1806/lr_1em05_loss_grpo_clip_std_g8_rb256_ep2/best_model",
+      "epochs_per_rollout_batch": 2,
+      "eval_history_path": "data/section7/grpo_experiment/section7_grpo_clip_single_20260426_1806/lr_1em05_loss_grpo_clip_std_g8_rb256_ep2/eval_history.jsonl",
+      "final_accuracy": 0.3115234375,
+      "final_model_path": "data/section7/grpo_experiment/section7_grpo_clip_single_20260426_1806/lr_1em05_loss_grpo_clip_std_g8_rb256_ep2/final_model",
+      "gradient_accumulation_steps": 64,
+      "group_size": 8,
+      "learning_rate": 1e-05,
+      "loss_type": "grpo_clip",
+      "model_path": "data/Qwen/Qwen2.5-Math-1.5B",
+      "n_grpo_steps": 50,
+      "num_eval_examples": 1024,
+      "num_train_examples": 10000,
+      "rollout_batch_size": 256,
+      "run_name": "lr_1em05_loss_grpo_clip_std_g8_rb256_ep2",
+      "step_summaries_path": "data/section7/grpo_experiment/section7_grpo_clip_single_20260426_1806/lr_1em05_loss_grpo_clip_std_g8_rb256_ep2/step_summaries.jsonl",
+      "train_batch_size": 128,
+      "train_history_path": "data/section7/grpo_experiment/section7_grpo_clip_single_20260426_1806/lr_1em05_loss_grpo_clip_std_g8_rb256_ep2/train_history.jsonl",
+      "use_std_normalization": true
+    }
+  ],
+  "wandb_entity": "echung32-ece405",
+  "wandb_group": "section7_grpo_clip_single_20260426_1806",
+  "wandb_project": "ece405-alignment-grpo"
+}

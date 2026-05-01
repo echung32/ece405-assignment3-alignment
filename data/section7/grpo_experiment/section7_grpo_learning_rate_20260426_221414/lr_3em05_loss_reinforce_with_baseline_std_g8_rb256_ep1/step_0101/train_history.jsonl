@@ -1,0 +1,1 @@
+{"train_step": 101, "loss": 0.0, "grad_norm": 0.0, "mean_token_entropy": 0.008812613465124741, "mean_reward": 0.01171875, "mean_answer_reward": 0.01171875, "mean_format_reward": 0.70703125, "response_tokens": 34188, "grpo_step": 101, "epoch_within_rollout_batch": 1, "elapsed_seconds": 5474.6174716159585}

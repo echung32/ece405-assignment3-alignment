@@ -1,0 +1,20 @@
+{
+  "accuracy": 0.0216,
+  "category_counts": {
+    "correct_with_format": 27,
+    "formatted_but_incorrect": 173,
+    "unformatted": 1050
+  },
+  "gpu_memory_utilization": 0.8,
+  "input_path": "data/math/val.jsonl",
+  "max_tokens": 1024,
+  "mean_format_reward": 0.16,
+  "mean_reward": 0.0216,
+  "min_tokens": 4,
+  "model_path": "data/Qwen/Qwen2.5-Math-1.5B",
+  "num_examples": 1250,
+  "output_path": "data/section3/math_baseline/report5_section3_full_tp1/math_baseline_predictions.jsonl",
+  "summary_path": "data/section3/math_baseline/report5_section3_full_tp1/math_baseline_summary.json",
+  "temperature": 1.0,
+  "top_p": 1.0
+}

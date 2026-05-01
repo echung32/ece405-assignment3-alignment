@@ -1,0 +1,11 @@
+{
+  "campaign": "section5_ei_full_20260426_fix_sweep",
+  "run_count": 4,
+  "best_run": "group 8, db 1024, epochs 2, EI 5",
+  "best_accuracy": 0.51171875,
+  "best_section4_sft": "2e-5",
+  "best_section4_sft_accuracy": 0.5064,
+  "accuracy_plot_path": "data/section5/analysis/section5_ei_full_20260426_fix_sweep/validation_accuracy_by_run.png",
+  "entropy_plot_path": "data/section5/analysis/section5_ei_full_20260426_fix_sweep/entropy_by_run.png",
+  "markdown_path": "data/section5/analysis/section5_ei_full_20260426_fix_sweep/section5_expert_iteration_comparison.md"
+}

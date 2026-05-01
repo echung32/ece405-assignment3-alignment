@@ -1,0 +1,36 @@
+{
+  "filtered_dataset_size": null,
+  "filtered_run": null,
+  "model_path": "data/Qwen/Qwen2.5-Math-1.5B",
+  "standard_runs": [
+    {
+      "best_accuracy": 0.4888,
+      "best_eval_step": 58,
+      "best_model_path": "data/section4/sft_experiment/section4_sft_all_20260423-0010_norm1_serial/512/unfiltered_512/best_model",
+      "eval_backend_fallback_reason": null,
+      "eval_backend_requested": "vllm",
+      "eval_backend_used": "vllm",
+      "eval_history_path": "data/section4/sft_experiment/section4_sft_all_20260423-0010_norm1_serial/512/unfiltered_512/eval_history.jsonl",
+      "final_accuracy": 0.4808,
+      "final_model_path": "data/section4/sft_experiment/section4_sft_all_20260423-0010_norm1_serial/512/unfiltered_512/final_model",
+      "gradient_accumulation_steps": 8,
+      "learning_rate": 2e-05,
+      "model_path": "data/Qwen/Qwen2.5-Math-1.5B",
+      "normalize_loss_by_response_tokens": false,
+      "num_epochs": 3,
+      "num_eval_examples": 1250,
+      "num_evals_per_run": 5,
+      "num_train_examples": 512,
+      "per_device_batch_size": 2,
+      "run_name": "unfiltered_512",
+      "total_optimizer_steps": 96,
+      "train_history_path": "data/section4/sft_experiment/section4_sft_all_20260423-0010_norm1_serial/512/unfiltered_512/train_history.jsonl",
+      "wandb_entity": "echung32-ece405",
+      "wandb_project": "ece405-alignment-sft",
+      "weight_decay": 0.0
+    }
+  ],
+  "wandb_entity": "echung32-ece405",
+  "wandb_group": "section4_sft_all_20260423-0010_norm1_serial",
+  "wandb_project": "ece405-alignment-sft"
+}

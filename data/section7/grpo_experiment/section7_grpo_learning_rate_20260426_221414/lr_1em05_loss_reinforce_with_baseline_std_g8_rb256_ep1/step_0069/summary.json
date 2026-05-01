@@ -1,0 +1,15 @@
+{
+  "elapsed_seconds": 3872.094390018028,
+  "grpo_step": 69,
+  "mean_advantage": 8.381903171539307e-09,
+  "mean_answer_reward": 0.08203125,
+  "mean_format_reward": 0.3515625,
+  "mean_group_std": 0.17400449514389038,
+  "mean_raw_reward": 0.08203125,
+  "mean_response_length": 737.15625,
+  "mean_reward": 0.08203125,
+  "num_correct_rollouts": 21,
+  "num_rollouts": 256,
+  "std_raw_reward": 0.274949848651886,
+  "train_updates": 1
+}

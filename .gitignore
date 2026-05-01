@@ -5,6 +5,7 @@ data/Qwen
 data/mmlu
 data/gsm8k
 data/alpaca_eval
+data/simple_safety_tests
 *.safetensors
 *.npz
 

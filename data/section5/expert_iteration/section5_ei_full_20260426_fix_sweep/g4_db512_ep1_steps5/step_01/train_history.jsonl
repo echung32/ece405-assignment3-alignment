@@ -1,0 +1,4 @@
+{"train_step": 1, "loss": 80.1208758354187, "grad_norm": 240.0, "response_tokens": 1901, "ei_step": 1, "sft_epoch_within_ei": 1}
+{"train_step": 2, "loss": 60.127336263656616, "grad_norm": 1040.0, "response_tokens": 1661, "ei_step": 1, "sft_epoch_within_ei": 1}
+{"train_step": 3, "loss": 80.52678632736206, "grad_norm": 222.0, "response_tokens": 2347, "ei_step": 1, "sft_epoch_within_ei": 1}
+{"train_step": 4, "loss": 110.40878200531006, "grad_norm": 310.0, "response_tokens": 1352, "ei_step": 1, "sft_epoch_within_ei": 1}

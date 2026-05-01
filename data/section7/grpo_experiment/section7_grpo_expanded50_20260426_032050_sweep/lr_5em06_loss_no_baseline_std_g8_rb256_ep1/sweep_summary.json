@@ -1,0 +1,30 @@
+{
+  "runs": [
+    {
+      "best_accuracy": 0.31640625,
+      "best_eval_step": 50,
+      "best_model_path": null,
+      "epochs_per_rollout_batch": 1,
+      "eval_history_path": "data/section7/grpo_experiment/section7_grpo_expanded50_20260426_032050_sweep/lr_5em06_loss_no_baseline_std_g8_rb256_ep1/eval_history.jsonl",
+      "final_accuracy": 0.31640625,
+      "final_model_path": null,
+      "gradient_accumulation_steps": 128,
+      "group_size": 8,
+      "learning_rate": 5e-06,
+      "loss_type": "no_baseline",
+      "model_path": "data/Qwen/Qwen2.5-Math-1.5B",
+      "n_grpo_steps": 50,
+      "num_eval_examples": 1024,
+      "num_train_examples": 10000,
+      "rollout_batch_size": 256,
+      "run_name": "lr_5em06_loss_no_baseline_std_g8_rb256_ep1",
+      "step_summaries_path": "data/section7/grpo_experiment/section7_grpo_expanded50_20260426_032050_sweep/lr_5em06_loss_no_baseline_std_g8_rb256_ep1/step_summaries.jsonl",
+      "train_batch_size": 256,
+      "train_history_path": "data/section7/grpo_experiment/section7_grpo_expanded50_20260426_032050_sweep/lr_5em06_loss_no_baseline_std_g8_rb256_ep1/train_history.jsonl",
+      "use_std_normalization": true
+    }
+  ],
+  "wandb_entity": "echung32-ece405",
+  "wandb_group": "section7_grpo_expanded50_20260426_032050_sweep",
+  "wandb_project": "ece405-alignment-grpo"
+}

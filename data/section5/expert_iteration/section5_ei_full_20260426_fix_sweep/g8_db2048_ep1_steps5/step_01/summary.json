@@ -1,0 +1,11 @@
+{
+  "ei_step": 1,
+  "filtered_dataset_size": 485,
+  "mean_answer_reward": 0.02960205078125,
+  "mean_format_reward": 0.16363525390625,
+  "mean_response_length": 1016.8262939453125,
+  "mean_reward": 0.02960205078125,
+  "num_correct_rollouts": 485,
+  "num_rollouts": 16384,
+  "num_unique_prompts_with_correct_rollout": 383
+}

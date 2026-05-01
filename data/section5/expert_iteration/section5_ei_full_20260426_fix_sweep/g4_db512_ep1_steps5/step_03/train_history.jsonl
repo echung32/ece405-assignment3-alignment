@@ -1,0 +1,17 @@
+{"train_step": 16, "loss": 106.65023040771484, "grad_norm": 244.0, "response_tokens": 2041, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 17, "loss": 73.3772783279419, "grad_norm": 197.0, "response_tokens": 1856, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 18, "loss": 83.80692958831787, "grad_norm": 211.0, "response_tokens": 1699, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 19, "loss": 83.07165765762329, "grad_norm": 201.0, "response_tokens": 1627, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 20, "loss": 85.81292772293091, "grad_norm": 208.0, "response_tokens": 2043, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 21, "loss": 64.96669578552246, "grad_norm": 195.0, "response_tokens": 1384, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 22, "loss": 85.68921661376953, "grad_norm": 225.0, "response_tokens": 2225, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 23, "loss": 119.27677202224731, "grad_norm": 250.0, "response_tokens": 2398, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 24, "loss": 86.36029291152954, "grad_norm": 222.0, "response_tokens": 1745, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 25, "loss": 84.11050605773926, "grad_norm": 238.0, "response_tokens": 1722, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 26, "loss": 82.13306188583374, "grad_norm": 210.0, "response_tokens": 2141, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 27, "loss": 73.97575521469116, "grad_norm": 210.0, "response_tokens": 1733, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 28, "loss": 84.11364603042603, "grad_norm": 218.0, "response_tokens": 1769, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 29, "loss": 62.17940139770508, "grad_norm": 204.0, "response_tokens": 1559, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 30, "loss": 68.13017392158508, "grad_norm": 206.0, "response_tokens": 2068, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 31, "loss": 43.39527451992035, "grad_norm": 162.0, "response_tokens": 1364, "ei_step": 3, "sft_epoch_within_ei": 1}
+{"train_step": 32, "loss": 85.54057312011719, "grad_norm": 728.0, "response_tokens": 264, "ei_step": 3, "sft_epoch_within_ei": 1}

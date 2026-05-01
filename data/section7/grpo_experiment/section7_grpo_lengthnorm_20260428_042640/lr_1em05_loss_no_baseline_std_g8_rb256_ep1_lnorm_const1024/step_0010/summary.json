@@ -1,0 +1,77 @@
+{
+  "elapsed_seconds": 300.76735415600706,
+  "grpo_step": 10,
+  "mean_advantage": 5.122274160385132e-09,
+  "mean_answer_reward": 0.0546875,
+  "mean_format_reward": 0.265625,
+  "mean_group_std": 0.11955811828374863,
+  "mean_raw_reward": 0.0546875,
+  "mean_response_length": 903.77734375,
+  "mean_reward": 0.0546875,
+  "num_correct_rollouts": 14,
+  "num_rollouts": 256,
+  "phase_seconds": {
+    "artifact_write": 0.007079,
+    "cache_old_log_probs": 6.5e-05,
+    "eval": 11.077184,
+    "eval_sync_policy": 2.31747,
+    "reward_compute": 0.295162,
+    "rollout_generate": 4.511423,
+    "step_total": 32.432063,
+    "sync_policy": 2.199871,
+    "train_update": 10.725621
+  },
+  "std_raw_reward": 0.22781464457511902,
+  "train_cuda_memory_mb": {
+    "after_cache_old_log_probs": {
+      "allocated_mb": 11849.86,
+      "device": "cuda:0",
+      "peak_allocated_mb": 11849.86,
+      "peak_reserved_mb": 14584.0,
+      "reserved_mb": 14584.0
+    },
+    "after_eval": {
+      "allocated_mb": 11847.11,
+      "device": "cuda:0",
+      "peak_allocated_mb": 39268.85,
+      "peak_reserved_mb": 45990.0,
+      "reserved_mb": 14566.0
+    },
+    "after_eval_sync_policy": {
+      "allocated_mb": 11847.11,
+      "device": "cuda:0",
+      "peak_allocated_mb": 39268.85,
+      "peak_reserved_mb": 45990.0,
+      "reserved_mb": 14566.0
+    },
+    "after_reward_compute": {
+      "allocated_mb": 11849.86,
+      "device": "cuda:0",
+      "peak_allocated_mb": 11849.86,
+      "peak_reserved_mb": 14584.0,
+      "reserved_mb": 14584.0
+    },
+    "after_rollout_generate": {
+      "allocated_mb": 11849.86,
+      "device": "cuda:0",
+      "peak_allocated_mb": 11849.86,
+      "peak_reserved_mb": 14584.0,
+      "reserved_mb": 14584.0
+    },
+    "after_sync_policy": {
+      "allocated_mb": 11849.86,
+      "device": "cuda:0",
+      "peak_allocated_mb": 11849.86,
+      "peak_reserved_mb": 14584.0,
+      "reserved_mb": 14584.0
+    },
+    "after_train_update": {
+      "allocated_mb": 11847.11,
+      "device": "cuda:0",
+      "peak_allocated_mb": 39268.85,
+      "peak_reserved_mb": 45990.0,
+      "reserved_mb": 14566.0
+    }
+  },
+  "train_updates": 1
+}
